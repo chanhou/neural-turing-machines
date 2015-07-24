@@ -25,13 +25,14 @@ def make_train(input_size,output_size,mem_size,mem_width,hidden_sizes=[100]):
 	l2 = T.sum(0)
 	for p in params:
 		l2 = l2 + (p ** 2).sum()
-	cost = T.sum(cross_entropy) + 1e-3*l2
-	grads  = [ T.clip(g,-100,100) for g in T.grad(cost,wrt=params) ]
+	cost = T.sum(cross_entropy) + 1e-4*l2
+	grads  = [ T.clip(g,-10,10) for g in T.grad(cost,wrt=params) ]
 	
 	train = theano.function(
 			inputs=[input_seq,output_seq],
 			outputs=cost,
-			updates=updates.adadelta(params,grads)
+			# updates=updates.adadelta(params,grads)
+			updates = updates.rmsprop(params,grads,learning_rate = 1e-5)
 		)
 
 	return P,train
@@ -55,7 +56,8 @@ if __name__ == "__main__":
 	score = None
 	alpha = 0.95
 	for counter in xrange(max_sequences):
-		length = np.random.randint(int(20 * (min(counter,50000)/float(50000))**2) +1) + 1
+		# length = np.random.randint(int(20 * (min(counter,50000)/float(50000))**2) +1) + 1
+		length = np.random.randint(1,21)
 		i,o = tasks.copy(8,length)
 		if score == None: score = train(i,o)
 		else: score = alpha * score + (1 - alpha) * train(i,o)
